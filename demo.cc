@@ -227,7 +227,7 @@ bool CMainApplication::BInit()
 	if( m_bDebugOpenGL )
 		SDL_GL_SetAttribute( SDL_GL_CONTEXT_FLAGS, SDL_GL_CONTEXT_DEBUG_FLAG );
 
-	m_pCompanionWindow = SDL_CreateWindow( "hellovr", nWindowPosX, nWindowPosY, m_nCompanionWindowWidth, m_nCompanionWindowHeight, unWindowFlags );
+	m_pCompanionWindow = SDL_CreateWindow( "Demo", nWindowPosX, nWindowPosY, m_nCompanionWindowWidth, m_nCompanionWindowHeight, unWindowFlags );
 	if (m_pCompanionWindow == NULL)
 	{
 		printf( "%s - Window could not be created! SDL Error: %s\n", __FUNCTION__, SDL_GetError() );
@@ -263,7 +263,7 @@ bool CMainApplication::BInit()
 	m_strDriver = GetTrackedDeviceString( vr::k_unTrackedDeviceIndex_Hmd, vr::Prop_TrackingSystemName_String );
 	m_strDisplay = GetTrackedDeviceString( vr::k_unTrackedDeviceIndex_Hmd, vr::Prop_SerialNumber_String );
 
-	std::string strWindowTitle = "hellovr - " + m_strDriver + " " + m_strDisplay;
+	std::string strWindowTitle = "Demo - " + m_strDriver + " " + m_strDisplay;
 	SDL_SetWindowTitle( m_pCompanionWindow, strWindowTitle.c_str() );
 	
 	// cube array
@@ -271,7 +271,7 @@ bool CMainApplication::BInit()
  	m_iSceneVolumeHeight = m_iSceneVolumeInit;
  	m_iSceneVolumeDepth = m_iSceneVolumeInit;
  		
- 	m_fScale = 0.3f;
+ 	m_fScale = 2.0f;
  	m_fScaleSpacing = 4.0f;
  
  	m_fNearClip = 0.1f;
@@ -734,14 +734,14 @@ bool CMainApplication::CreateAllShaders()
 		// Vertex Shader
 		"#version 410\n"
 		"uniform mat4 matrix;\n"
-		"layout(location = 0) in vec4 position;\n"
+		"layout(location = 0) in vec3 position;\n"
 		"layout(location = 1) in vec2 v2UVcoordsIn;\n"
 		"layout(location = 2) in vec3 v3NormalIn;\n"
 		"out vec2 v2UVcoords;\n"
 		"void main()\n"
 		"{\n"
 		"	v2UVcoords = v2UVcoordsIn;\n"
-		"	gl_Position = position;\n"
+		"	gl_Position = vec4(position, 1.0);\n"
 		"}\n",
 
 		// Fragment Shader
@@ -781,13 +781,13 @@ bool CMainApplication::CreateAllShaders()
 		"   outputColor = texture(mytexture, v2UVcoords);\n"
 		"}\n"
 		);
-	*/
 	m_nSceneMatrixLocation = glGetUniformLocation( m_unSceneProgramID, "matrix" );
 	if( m_nSceneMatrixLocation == -1 )
 	{
 		dprintf( "Unable to find matrix uniform in scene shader\n" );
 		return false;
 	}
+	*/
 
 	m_unControllerTransformProgramID = CompileGLShader(
 		"Controller",
@@ -932,6 +932,7 @@ void CMainApplication::SetupScene()
 	if ( !m_pHMD )
 		return;
 
+	/*
 	float vertics[] = {
 		-1.0f, -1.0f, 0.0f, 0.0f, 0.0f,
 		1.0f, -1.0f, 0.0f, 1.0f, 0.0f,
@@ -956,18 +957,23 @@ void CMainApplication::SetupScene()
 	offset += sizeof(float) * 3;
 	glEnableVertexAttribArray( 1 );
 	glVertexAttribPointer( 1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (const void *)offset);
+	*/
 
-	/*
 	std::vector<float> vertdataarray;
 
 	Matrix4 matScale;
 	matScale.scale( m_fScale, m_fScale, m_fScale );
 	Matrix4 matTransform;
-	matTransform.translate(
-		-( (float)m_iSceneVolumeWidth * m_fScaleSpacing ) / 2.f,
-		-( (float)m_iSceneVolumeHeight * m_fScaleSpacing ) / 2.f,
-		-( (float)m_iSceneVolumeDepth * m_fScaleSpacing ) / 2.f);
+	matTransform.translate(- 0.5, - 0.5, - 5.0);
+
+	// dprintf("================================================== width, height, depth: %f, %f, %f", m_iSceneVolumeWidth, m_iSceneVolumeHeight, m_iSceneVolumeDepth);
+
+	// matTransform.translate(
+	// 	-( (float)m_iSceneVolumeWidth * m_fScaleSpacing ) / 2.f,
+	// 	-( (float)m_iSceneVolumeHeight * m_fScaleSpacing ) / 2.f,
+	// 	-( (float)m_iSceneVolumeDepth * m_fScaleSpacing ) / 2.f);
 	
+	// Matrix4 mat = matScale;
 	Matrix4 mat = matScale * matTransform;
 
 	for( int z = 0; z< m_iSceneVolumeDepth; z++ )
@@ -1001,7 +1007,6 @@ void CMainApplication::SetupScene()
 	offset += sizeof(Vector3);
 	glEnableVertexAttribArray( 1 );
 	glVertexAttribPointer( 1, 2, GL_FLOAT, GL_FALSE, stride, (const void *)offset);
-	*/
 
 	glBindVertexArray( 0 );
 	glDisableVertexAttribArray(0);
@@ -1410,6 +1415,7 @@ void CMainApplication::RenderCompanionWindow()
 	glUseProgram( m_unCompanionWindowProgramID );
 
 	// render left eye (first half of index array )
+	// glBindTexture(GL_TEXTURE_2D, m_iTexture );
 	glBindTexture(GL_TEXTURE_2D, leftEyeDesc.m_nResolveTextureId );
 	glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE );
 	glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE );
@@ -1418,7 +1424,8 @@ void CMainApplication::RenderCompanionWindow()
 	glDrawElements( GL_TRIANGLES, m_uiCompanionWindowIndexSize/2, GL_UNSIGNED_SHORT, 0 );
 
 	// render right eye (second half of index array )
-	glBindTexture(GL_TEXTURE_2D, rightEyeDesc.m_nResolveTextureId  );
+	// glBindTexture(GL_TEXTURE_2D, m_iTexture  );
+	// glBindTexture(GL_TEXTURE_2D, rightEyeDesc.m_nResolveTextureId  );
 	glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE );
 	glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE );
 	glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR );
@@ -1615,6 +1622,28 @@ Matrix4 CMainApplication::ConvertSteamVRMatrixToMatrix4( const vr::HmdMatrix34_t
 	return matrixObj;
 }
 
+vr::HmdMatrix34_t CMainApplication::ConvertMatrix4ToSteamVRMatrix(const Matrix4& matPose) {
+	const float* tmp = matPose.get();
+	vr::HmdMatrix34_t matrixObj;
+
+	matrixObj.m[0][0] = tmp[0];
+	matrixObj.m[0][1] = tmp[4];
+	matrixObj.m[0][2] = tmp[8];
+	matrixObj.m[0][3] = tmp[12];
+
+	matrixObj.m[1][0] = tmp[1];
+	matrixObj.m[1][1] = tmp[5];
+	matrixObj.m[1][2] = tmp[9];
+	matrixObj.m[1][3] = tmp[13];
+
+	matrixObj.m[2][0] = tmp[2];
+	matrixObj.m[2][1] = tmp[6];
+	matrixObj.m[2][2] = tmp[10];
+	matrixObj.m[2][3] = tmp[14];
+
+	return matrixObj;
+}
+
 
 //-----------------------------------------------------------------------------
 // Purpose: Create/destroy GL Render Models
@@ -1744,6 +1773,8 @@ void CMainApplication::printPositionalData()
             vr::HmdMatrix34_t poseMatrix;
             vr::HmdVector3_t position;
             vr::HmdQuaternion_t quaternion;
+			vr::HmdVector3_t leftPosition, rightPosition;
+			vr::HmdQuaternion_t leftQuaternion, rightQuaternion;
             vr::ETrackedDeviceClass trackedDeviceClass = vr::VRSystem()->GetTrackedDeviceClass(unDevice);
 
             switch (trackedDeviceClass) {
@@ -1756,8 +1787,16 @@ void CMainApplication::printPositionalData()
 
                 printDevicePositionalData("HMD", poseMatrix, position, quaternion);
 
-                break;
+				leftPosition = GetPosition(ConvertMatrix4ToSteamVRMatrix(m_mat4eyePosLeft * m_mat4HMDPose));
+				rightPosition = GetPosition(ConvertMatrix4ToSteamVRMatrix(m_mat4eyePosRight * m_mat4HMDPose));
+				leftQuaternion = GetRotation(ConvertMatrix4ToSteamVRMatrix(m_mat4eyePosLeft * m_mat4HMDPose));
+				rightQuaternion = GetRotation(ConvertMatrix4ToSteamVRMatrix(m_mat4eyePosRight * m_mat4HMDPose));
 
+				printDevicePositionalData("Left eye", ConvertMatrix4ToSteamVRMatrix(m_mat4eyePosLeft * m_mat4HMDPose), leftPosition, leftQuaternion);
+				printDevicePositionalData("Right eye", ConvertMatrix4ToSteamVRMatrix(m_mat4eyePosRight * m_mat4HMDPose), rightPosition, rightQuaternion);
+
+                break;
+				
             case vr::ETrackedDeviceClass::TrackedDeviceClass_GenericTracker:
                 vr::VRSystem()->GetDeviceToAbsoluteTrackingPose(vr::TrackingUniverseStanding, 0, &trackedDevicePose, 1);
                 // print positiona data for a general vive tracker.
@@ -1866,15 +1905,22 @@ int main(int argc, char *argv[])
 {
 	CMainApplication *pMainApplication = new CMainApplication( argc, argv );
 
+	std::clog << "================================================== Running... ==================================================" << std::endl;
+	dprintf("================================================== Running... ==================================================");
+
 	if (!pMainApplication->BInit())
 	{
 		pMainApplication->Shutdown();
+		dprintf("================================================== End 0 ==================================================");
 		return 1;
 	}
 
 	pMainApplication->RunMainLoop();
 
 	pMainApplication->Shutdown();
+
+	std::clog << "End." << std::endl;
+	dprintf("================================================== End 1 ==================================================");
 
 	return 0;
 }

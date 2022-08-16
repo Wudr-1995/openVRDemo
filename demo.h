@@ -35,6 +35,8 @@
 #define _countof(x) (sizeof(x)/sizeof((x)[0]))
 #endif
 
+#pragma warning(disable:4996)
+
 void ThreadSleep( unsigned long nMilliseconds );
 
 class CGLRenderModel
@@ -95,12 +97,18 @@ public:
 	void RenderCompanionWindow();
 	void RenderScene( vr::Hmd_Eye nEye );
 
+	void printPositionalData();
+	vr::HmdQuaternion_t GetRotation(vr::HmdMatrix34_t matrix);
+	vr::HmdVector3_t GetPosition(vr::HmdMatrix34_t matrix);
+	void printDevicePositionalData(const char * deviceName, vr::HmdMatrix34_t posMatrix, vr::HmdVector3_t position, vr::HmdQuaternion_t quaternion);
+
 	Matrix4 GetHMDMatrixProjectionEye( vr::Hmd_Eye nEye );
 	Matrix4 GetHMDMatrixPoseEye( vr::Hmd_Eye nEye );
 	Matrix4 GetCurrentViewProjectionMatrix( vr::Hmd_Eye nEye );
 	void UpdateHMDMatrixPose();
 
 	Matrix4 ConvertSteamVRMatrixToMatrix4( const vr::HmdMatrix34_t &matPose );
+	vr::HmdMatrix34_t ConvertMatrix4ToSteamVRMatrix( const Matrix4 &matPose);
 
 	GLuint CompileGLShader( const char *pchShaderName, const char *pchVertexShader, const char *pchFragmentShader );
 	bool CreateAllShaders();
@@ -239,24 +247,16 @@ private: // OpenGL bookkeeping
 	vr::VRActionSetHandle_t m_actionsetDemo = vr::k_ulInvalidActionSetHandle;
 };
 
-bool GetDigitalActionRisingEdge(vr::VRActionHandle_t action, vr::VRInputValueHandle_t *pDevicePath = nullptr );
+bool GetDigitalActionRisingEdge(vr::VRActionHandle_t action, vr::VRInputValueHandle_t *pDevicePath );
 
-bool GetDigitalActionFallingEdge(vr::VRActionHandle_t action, vr::VRInputValueHandle_t *pDevicePath = nullptr );
+bool GetDigitalActionFallingEdge(vr::VRActionHandle_t action, vr::VRInputValueHandle_t *pDevicePath );
 
-bool GetDigitalActionState(vr::VRActionHandle_t action, vr::VRInputValueHandle_t *pDevicePath = nullptr );
+bool GetDigitalActionState(vr::VRActionHandle_t action, vr::VRInputValueHandle_t *pDevicePath );
 
 void dprintf( const char *fmt, ... );
 
-std::string GetTrackedDeviceString( vr::TrackedDeviceIndex_t unDevice, vr::TrackedDeviceProperty prop, vr::TrackedPropertyError *peError = NULL );
+std::string GetTrackedDeviceString( vr::TrackedDeviceIndex_t unDevice, vr::TrackedDeviceProperty prop, vr::TrackedPropertyError *peError );
 
 void APIENTRY DebugCallback(GLenum source, GLenum type, GLuint id, GLenum severity, GLsizei length, const char* message, const void* userParam);
-
-void CMainApplication::printPositionalData();
-
-vr::HmdQuaternion_t CMainApplication::GetRotation(vr::HmdMatrix34_t matrix);
-
-vr::HmdVector3_t CMainApplication::GetPosition(vr::HmdMatrix34_t matrix);
-
-void CMainApplication::printDevicePositionalData(const char * deviceName, vr::HmdMatrix34_t posMatrix, vr::HmdVector3_t position, vr::HmdQuaternion_t quaternion);
 
 #endif
