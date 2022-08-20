@@ -122,7 +122,7 @@ CMainApplication::CMainApplication( int argc, char *argv[] )
 	, m_iTrackedControllerCount_Last( -1 )
 	, m_iValidPoseCount( 0 )
 	, m_iValidPoseCount_Last( -1 )
-	, m_iSceneVolumeInit( 20 )
+	, m_iSceneVolumeInit( 2 )
 	, m_strPoseClasses("")
 	, m_bShowCubes( true )
 {
@@ -271,7 +271,7 @@ bool CMainApplication::BInit()
  	m_iSceneVolumeHeight = m_iSceneVolumeInit;
  	m_iSceneVolumeDepth = m_iSceneVolumeInit;
  		
- 	m_fScale = 2.0f;
+ 	m_fScale = 1.0f;
  	m_fScaleSpacing = 4.0f;
  
  	m_fNearClip = 0.1f;
@@ -754,40 +754,39 @@ bool CMainApplication::CreateAllShaders()
 		"   outputColor = texture(mytexture, v2UVcoords);\n"
 		"}\n"
 		);
-	/*
-	m_unSceneProgramID = CompileGLShader( 
-		"Scene",
 
-		// Vertex Shader
-		"#version 410\n"
-		"uniform mat4 matrix;\n"
-		"layout(location = 0) in vec4 position;\n"
-		"layout(location = 1) in vec2 v2UVcoordsIn;\n"
-		"layout(location = 2) in vec3 v3NormalIn;\n"
-		"out vec2 v2UVcoords;\n"
-		"void main()\n"
-		"{\n"
-		"	v2UVcoords = v2UVcoordsIn;\n"
-		"	gl_Position = matrix * position;\n"
-		"}\n",
+	// m_unSceneProgramID = CompileGLShader( 
+	// 	"Scene",
 
-		// Fragment Shader
-		"#version 410 core\n"
-		"uniform sampler2D mytexture;\n"
-		"in vec2 v2UVcoords;\n"
-		"out vec4 outputColor;\n"
-		"void main()\n"
-		"{\n"
-		"   outputColor = texture(mytexture, v2UVcoords);\n"
-		"}\n"
-		);
-	m_nSceneMatrixLocation = glGetUniformLocation( m_unSceneProgramID, "matrix" );
-	if( m_nSceneMatrixLocation == -1 )
-	{
-		dprintf( "Unable to find matrix uniform in scene shader\n" );
-		return false;
-	}
-	*/
+	// 	// Vertex Shader
+	// 	"#version 410\n"
+	// 	"uniform mat4 matrix;\n"
+	// 	"layout(location = 0) in vec4 position;\n"
+	// 	"layout(location = 1) in vec2 v2UVcoordsIn;\n"
+	// 	"layout(location = 2) in vec3 v3NormalIn;\n"
+	// 	"out vec2 v2UVcoords;\n"
+	// 	"void main()\n"
+	// 	"{\n"
+	// 	"	v2UVcoords = v2UVcoordsIn;\n"
+	// 	"	gl_Position = matrix * position;\n"
+	// 	"}\n",
+
+	// 	// Fragment Shader
+	// 	"#version 410 core\n"
+	// 	"uniform sampler2D mytexture;\n"
+	// 	"in vec2 v2UVcoords;\n"
+	// 	"out vec4 outputColor;\n"
+	// 	"void main()\n"
+	// 	"{\n"
+	// 	"   outputColor = texture(mytexture, v2UVcoords);\n"
+	// 	"}\n"
+	// 	);
+	// m_nSceneMatrixLocation = glGetUniformLocation( m_unSceneProgramID, "matrix" );
+	// if( m_nSceneMatrixLocation == -1 )
+	// {
+	// 	dprintf( "Unable to find matrix uniform in scene shader\n" );
+	// 	return false;
+	// }
 
 	m_unControllerTransformProgramID = CompileGLShader(
 		"Controller",
@@ -932,15 +931,16 @@ void CMainApplication::SetupScene()
 	if ( !m_pHMD )
 		return;
 
-	/*
 	float vertics[] = {
-		-1.0f, -1.0f, 0.0f, 0.0f, 0.0f,
-		1.0f, -1.0f, 0.0f, 1.0f, 0.0f,
-		1.0f, 1.0f, 0.0f, 1.0f, 1.0f,
-		1.0f, 1.0f, 0.0f, 1.0f, 1.0f,
-		-1.0f, 1.0f, 0.0f, 0.0f, 1.0f,
-		-1.0f, -1.0f, 0.0f, 0.0f, 0.0f
+		-0.7f, -0.7f, -0.0f, 0.0f, 1.0f,
+		 0.7f, -0.7f, -0.0f, 1.0f, 1.0f,
+		 0.7f,  0.7f, -0.0f, 1.0f, 0.0f,
+		 0.7f,  0.7f, -0.0f, 1.0f, 0.0f,
+		-0.7f,  0.7f, -0.0f, 0.0f, 0.0f,
+		-0.7f, -0.7f, -0.0f, 0.0f, 1.0f
 	};
+
+	m_uiVertcount = 6;
 
 	glGenVertexArrays( 1, &m_unSceneVAO );
 	glBindVertexArray( m_unSceneVAO );
@@ -957,16 +957,17 @@ void CMainApplication::SetupScene()
 	offset += sizeof(float) * 3;
 	glEnableVertexAttribArray( 1 );
 	glVertexAttribPointer( 1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (const void *)offset);
-	*/
 
+	/*
 	std::vector<float> vertdataarray;
 
 	Matrix4 matScale;
 	matScale.scale( m_fScale, m_fScale, m_fScale );
 	Matrix4 matTransform;
 	matTransform.translate(- 0.5, - 0.5, - 5.0);
+	Matrix4 mat = matScale * matTransform;
 
-	// dprintf("================================================== width, height, depth: %f, %f, %f", m_iSceneVolumeWidth, m_iSceneVolumeHeight, m_iSceneVolumeDepth);
+	dprintf("================================================== width, height, depth: %f, %f, %f\n", m_iSceneVolumeWidth, m_iSceneVolumeHeight, m_iSceneVolumeDepth);
 
 	// matTransform.translate(
 	// 	-( (float)m_iSceneVolumeWidth * m_fScaleSpacing ) / 2.f,
@@ -974,14 +975,35 @@ void CMainApplication::SetupScene()
 	// 	-( (float)m_iSceneVolumeDepth * m_fScaleSpacing ) / 2.f);
 	
 	// Matrix4 mat = matScale;
-	Matrix4 mat = matScale * matTransform;
 
 	for( int z = 0; z< m_iSceneVolumeDepth; z++ )
 	{
+		if (z == 0) {
+			mat = mat * Matrix4().translate( m_fScaleSpacing, 0, 0 );
+			mat = mat * Matrix4().translate( m_fScaleSpacing, 0, 0 );
+			mat = mat * Matrix4().translate( -((float)m_iSceneVolumeWidth) * m_fScaleSpacing, m_fScaleSpacing, 0 );
+			mat = mat * Matrix4().translate( m_fScaleSpacing, 0, 0 );
+			mat = mat * Matrix4().translate( m_fScaleSpacing, 0, 0 );
+			mat = mat * Matrix4().translate( -((float)m_iSceneVolumeWidth) * m_fScaleSpacing, m_fScaleSpacing, 0 );
+			mat = mat * Matrix4().translate( 0, -((float)m_iSceneVolumeHeight) * m_fScaleSpacing, m_fScaleSpacing );
+			continue;
+		}
 		for( int y = 0; y< m_iSceneVolumeHeight; y++ )
 		{
+			if (y == 1) {
+				mat = mat * Matrix4().translate( m_fScaleSpacing, 0, 0 );
+				mat = mat * Matrix4().translate( m_fScaleSpacing, 0, 0 );
+				mat = mat * Matrix4().translate( -((float)m_iSceneVolumeWidth) * m_fScaleSpacing, m_fScaleSpacing, 0 );
+				continue;
+			}
 			for( int x = 0; x< m_iSceneVolumeWidth; x++ )
 			{
+				if (x == 1) {
+					mat = mat * Matrix4().translate( m_fScaleSpacing, 0, 0 );
+					continue;
+				}
+				dprintf("================================================== In loop, x, y, z: %d, %d, %d\n", x, y, z);
+				dprintf("================================================== In loop, width, height, depth: %f, %f, %f\n", m_iSceneVolumeInit, m_iSceneVolumeInit, m_iSceneVolumeInit);
 				AddCubeToScene( mat, vertdataarray );
 				mat = mat * Matrix4().translate( m_fScaleSpacing, 0, 0 );
 			}
@@ -1007,6 +1029,7 @@ void CMainApplication::SetupScene()
 	offset += sizeof(Vector3);
 	glEnableVertexAttribArray( 1 );
 	glVertexAttribPointer( 1, 2, GL_FLOAT, GL_FALSE, stride, (const void *)offset);
+	*/
 
 	glBindVertexArray( 0 );
 	glDisableVertexAttribArray(0);
@@ -1052,40 +1075,40 @@ void CMainApplication::AddCubeToScene( Matrix4 mat, std::vector<float> &vertdata
 	AddCubeVertex( H.x, H.y, H.z, 0, 0, vertdata );
 	AddCubeVertex( E.x, E.y, E.z, 0, 1, vertdata );
 					 
-	AddCubeVertex( B.x, B.y, B.z, 0, 1, vertdata ); //Back
-	AddCubeVertex( A.x, A.y, A.z, 1, 1, vertdata );
-	AddCubeVertex( D.x, D.y, D.z, 1, 0, vertdata );
-	AddCubeVertex( D.x, D.y, D.z, 1, 0, vertdata );
-	AddCubeVertex( C.x, C.y, C.z, 0, 0, vertdata );
-	AddCubeVertex( B.x, B.y, B.z, 0, 1, vertdata );
+	// AddCubeVertex( B.x, B.y, B.z, 0, 1, vertdata ); //Back
+	// AddCubeVertex( A.x, A.y, A.z, 1, 1, vertdata );
+	// AddCubeVertex( D.x, D.y, D.z, 1, 0, vertdata );
+	// AddCubeVertex( D.x, D.y, D.z, 1, 0, vertdata );
+	// AddCubeVertex( C.x, C.y, C.z, 0, 0, vertdata );
+	// AddCubeVertex( B.x, B.y, B.z, 0, 1, vertdata );
 					
-	AddCubeVertex( H.x, H.y, H.z, 0, 1, vertdata ); //Top
-	AddCubeVertex( G.x, G.y, G.z, 1, 1, vertdata );
-	AddCubeVertex( C.x, C.y, C.z, 1, 0, vertdata );
-	AddCubeVertex( C.x, C.y, C.z, 1, 0, vertdata );
-	AddCubeVertex( D.x, D.y, D.z, 0, 0, vertdata );
-	AddCubeVertex( H.x, H.y, H.z, 0, 1, vertdata );
+	// AddCubeVertex( H.x, H.y, H.z, 0, 1, vertdata ); //Top
+	// AddCubeVertex( G.x, G.y, G.z, 1, 1, vertdata );
+	// AddCubeVertex( C.x, C.y, C.z, 1, 0, vertdata );
+	// AddCubeVertex( C.x, C.y, C.z, 1, 0, vertdata );
+	// AddCubeVertex( D.x, D.y, D.z, 0, 0, vertdata );
+	// AddCubeVertex( H.x, H.y, H.z, 0, 1, vertdata );
 				
-	AddCubeVertex( A.x, A.y, A.z, 0, 1, vertdata ); //Bottom
-	AddCubeVertex( B.x, B.y, B.z, 1, 1, vertdata );
-	AddCubeVertex( F.x, F.y, F.z, 1, 0, vertdata );
-	AddCubeVertex( F.x, F.y, F.z, 1, 0, vertdata );
-	AddCubeVertex( E.x, E.y, E.z, 0, 0, vertdata );
-	AddCubeVertex( A.x, A.y, A.z, 0, 1, vertdata );
+	// AddCubeVertex( A.x, A.y, A.z, 0, 1, vertdata ); //Bottom
+	// AddCubeVertex( B.x, B.y, B.z, 1, 1, vertdata );
+	// AddCubeVertex( F.x, F.y, F.z, 1, 0, vertdata );
+	// AddCubeVertex( F.x, F.y, F.z, 1, 0, vertdata );
+	// AddCubeVertex( E.x, E.y, E.z, 0, 0, vertdata );
+	// AddCubeVertex( A.x, A.y, A.z, 0, 1, vertdata );
 					
-	AddCubeVertex( A.x, A.y, A.z, 0, 1, vertdata ); //Left
-	AddCubeVertex( E.x, E.y, E.z, 1, 1, vertdata );
-	AddCubeVertex( H.x, H.y, H.z, 1, 0, vertdata );
-	AddCubeVertex( H.x, H.y, H.z, 1, 0, vertdata );
-	AddCubeVertex( D.x, D.y, D.z, 0, 0, vertdata );
-	AddCubeVertex( A.x, A.y, A.z, 0, 1, vertdata );
+	// AddCubeVertex( A.x, A.y, A.z, 0, 1, vertdata ); //Left
+	// AddCubeVertex( E.x, E.y, E.z, 1, 1, vertdata );
+	// AddCubeVertex( H.x, H.y, H.z, 1, 0, vertdata );
+	// AddCubeVertex( H.x, H.y, H.z, 1, 0, vertdata );
+	// AddCubeVertex( D.x, D.y, D.z, 0, 0, vertdata );
+	// AddCubeVertex( A.x, A.y, A.z, 0, 1, vertdata );
 
-	AddCubeVertex( F.x, F.y, F.z, 0, 1, vertdata ); //Right
-	AddCubeVertex( B.x, B.y, B.z, 1, 1, vertdata );
-	AddCubeVertex( C.x, C.y, C.z, 1, 0, vertdata );
-	AddCubeVertex( C.x, C.y, C.z, 1, 0, vertdata );
-	AddCubeVertex( G.x, G.y, G.z, 0, 0, vertdata );
-	AddCubeVertex( F.x, F.y, F.z, 0, 1, vertdata );
+	// AddCubeVertex( F.x, F.y, F.z, 0, 1, vertdata ); //Right
+	// AddCubeVertex( B.x, B.y, B.z, 1, 1, vertdata );
+	// AddCubeVertex( C.x, C.y, C.z, 1, 0, vertdata );
+	// AddCubeVertex( C.x, C.y, C.z, 1, 0, vertdata );
+	// AddCubeVertex( G.x, G.y, G.z, 0, 0, vertdata );
+	// AddCubeVertex( F.x, F.y, F.z, 0, 1, vertdata );
 }
 
 
@@ -1378,7 +1401,7 @@ void CMainApplication::RenderScene( vr::Hmd_Eye nEye )
 	{
 		// draw the controller axis lines
 		glUseProgram( m_unControllerTransformProgramID );
-		// glUniformMatrix4fv( m_nControllerMatrixLocation, 1, GL_FALSE, GetCurrentViewProjectionMatrix( nEye ).get() );
+		glUniformMatrix4fv( m_nControllerMatrixLocation, 1, GL_FALSE, GetCurrentViewProjectionMatrix( nEye ).get() );
 		glBindVertexArray( m_unControllerVAO );
 		glDrawArrays( GL_LINES, 0, m_uiControllerVertcount );
 		glBindVertexArray( 0 );
@@ -1905,13 +1928,12 @@ int main(int argc, char *argv[])
 {
 	CMainApplication *pMainApplication = new CMainApplication( argc, argv );
 
-	std::clog << "================================================== Running... ==================================================" << std::endl;
-	dprintf("================================================== Running... ==================================================");
+	dprintf("================================================== Running... ==================================================\n");
 
 	if (!pMainApplication->BInit())
 	{
 		pMainApplication->Shutdown();
-		dprintf("================================================== End 0 ==================================================");
+		dprintf("================================================== End 0 ==================================================\n");
 		return 1;
 	}
 
@@ -1920,7 +1942,7 @@ int main(int argc, char *argv[])
 	pMainApplication->Shutdown();
 
 	std::clog << "End." << std::endl;
-	dprintf("================================================== End 1 ==================================================");
+	dprintf("================================================== End 1 ==================================================\n");
 
 	return 0;
 }
