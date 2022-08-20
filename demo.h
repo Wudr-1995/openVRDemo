@@ -81,7 +81,8 @@ public:
 	void ProcessVREvent( const vr::VREvent_t & event );
 	void RenderFrame();
 
-	bool SetupTexturemaps();
+	bool SetupLeftTexturemaps();
+	bool SetupRightTexturemaps();
 
 	void SetupScene();
 	void AddCubeToScene( Matrix4 mat, std::vector<float> &vertdata );
@@ -175,7 +176,8 @@ private: // OpenGL bookkeeping
 	float m_fNearClip;
 	float m_fFarClip;
 
-	GLuint m_iTexture;
+	GLuint m_iLeftTex;
+	GLuint m_iRightTex;
 
 	unsigned int m_uiVertcount;
 

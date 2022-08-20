@@ -277,7 +277,8 @@ bool CMainApplication::BInit()
  	m_fNearClip = 0.1f;
  	m_fFarClip = 30.0f;
  
- 	m_iTexture = 0;
+ 	m_iLeftTex = 0;
+	m_iRightTex = 0;
  	m_uiVertcount = 0;
  
 // 		m_MillisecondsTimer.start(1, this);
@@ -345,7 +346,8 @@ bool CMainApplication::BInitGL()
 	if( !CreateAllShaders() )
 		return false;
 
-	SetupTexturemaps();
+	SetupLeftTexturemaps();
+	SetupRightTexturemaps();
 	SetupScene();
 	SetupCameras();
 	SetupStereoRenderTargets();
@@ -888,7 +890,7 @@ bool CMainApplication::CreateAllShaders()
 //-----------------------------------------------------------------------------
 // Purpose:
 //-----------------------------------------------------------------------------
-bool CMainApplication::SetupTexturemaps()
+bool CMainApplication::SetupLeftTexturemaps()
 {
 	std::string sExecutableDirectory = Path_StripFilename( Path_GetExecutablePath() );
 	std::string strFullPath = Path_MakeAbsolute( "../cube_texture.png", sExecutableDirectory );
@@ -900,8 +902,8 @@ bool CMainApplication::SetupTexturemaps()
 	if ( nError != 0 )
 		return false;
 
-	glGenTextures(1, &m_iTexture );
-	glBindTexture( GL_TEXTURE_2D, m_iTexture );
+	glGenTextures(1, &m_iLeftTex );
+	glBindTexture( GL_TEXTURE_2D, m_iLeftTex );
 
 	glTexImage2D( GL_TEXTURE_2D, 0, GL_RGBA, nImageWidth, nImageHeight,
 		0, GL_RGBA, GL_UNSIGNED_BYTE, &imageRGBA[0] );
@@ -919,7 +921,41 @@ bool CMainApplication::SetupTexturemaps()
 	 	
 	glBindTexture( GL_TEXTURE_2D, 0 );
 
-	return ( m_iTexture != 0 );
+	return ( m_iLeftTex != 0 );
+}
+
+bool CMainApplication::SetupRightTexturemaps()
+{
+	std::string sExecutableDirectory = Path_StripFilename( Path_GetExecutablePath() );
+	std::string strFullPath = Path_MakeAbsolute( "../cube_texture.png", sExecutableDirectory );
+	
+	std::vector<unsigned char> imageRGBA;
+	unsigned nImageWidth, nImageHeight;
+	unsigned nError = lodepng::decode( imageRGBA, nImageWidth, nImageHeight, strFullPath.c_str() );
+	
+	if ( nError != 0 )
+		return false;
+
+	glGenTextures(1, &m_iRightTex );
+	glBindTexture( GL_TEXTURE_2D, m_iRightTex );
+
+	glTexImage2D( GL_TEXTURE_2D, 0, GL_RGBA, nImageWidth, nImageHeight,
+		0, GL_RGBA, GL_UNSIGNED_BYTE, &imageRGBA[0] );
+
+	glGenerateMipmap(GL_TEXTURE_2D);
+
+	glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE );
+	glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE );
+	glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR );
+	glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR );
+
+	GLfloat fLargest;
+	glGetFloatv(GL_MAX_TEXTURE_MAX_ANISOTROPY_EXT, &fLargest);
+	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY_EXT, fLargest);
+	 	
+	glBindTexture( GL_TEXTURE_2D, 0 );
+
+	return ( m_iRightTex != 0 );
 }
 
 
@@ -1390,7 +1426,10 @@ void CMainApplication::RenderScene( vr::Hmd_Eye nEye )
 		glUseProgram( m_unSceneProgramID );
 		// glUniformMatrix4fv( m_nSceneMatrixLocation, 1, GL_FALSE, GetCurrentViewProjectionMatrix( nEye ).get() );
 		glBindVertexArray( m_unSceneVAO );
-		glBindTexture( GL_TEXTURE_2D, m_iTexture );
+		if (nEye == vr::Eye_Left)
+			glBindTexture( GL_TEXTURE_2D, m_iLeftTex );
+		else
+			glBindTexture( GL_TEXTURE_2D, m_iRightTex);
 		glDrawArrays( GL_TRIANGLES, 0, m_uiVertcount );
 		glBindVertexArray( 0 );
 	}
@@ -1448,7 +1487,7 @@ void CMainApplication::RenderCompanionWindow()
 
 	// render right eye (second half of index array )
 	// glBindTexture(GL_TEXTURE_2D, m_iTexture  );
-	// glBindTexture(GL_TEXTURE_2D, rightEyeDesc.m_nResolveTextureId  );
+	glBindTexture(GL_TEXTURE_2D, rightEyeDesc.m_nResolveTextureId  );
 	glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE );
 	glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE );
 	glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR );
