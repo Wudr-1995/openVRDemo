@@ -39,6 +39,16 @@
 
 void ThreadSleep( unsigned long nMilliseconds );
 
+class NeRf {
+	public:
+		NeRF();
+		~NeRF();
+		static char* renderWithPose(vr::HmdVector3_t, vr::HmdQuaternion_t);
+
+	private:
+
+};
+
 class CGLRenderModel
 {
 public:
@@ -79,7 +89,7 @@ public:
 	void RunMainLoop();
 	bool HandleInput();
 	void ProcessVREvent( const vr::VREvent_t & event );
-	void RenderFrame();
+	void RenderFrame(char*, char*);
 
 	bool SetupLeftTexturemaps();
 	bool SetupRightTexturemaps();
@@ -94,6 +104,9 @@ public:
 	void SetupCompanionWindow();
 	void SetupCameras();
 
+	void RefreshLeftTexturemaps(char*);
+	void RefreshRightTexturemaps(char*);
+
 	void RenderStereoTargets();
 	void RenderCompanionWindow();
 	void RenderScene( vr::Hmd_Eye nEye );
@@ -102,6 +115,11 @@ public:
 	vr::HmdQuaternion_t GetRotation(vr::HmdMatrix34_t matrix);
 	vr::HmdVector3_t GetPosition(vr::HmdMatrix34_t matrix);
 	void printDevicePositionalData(const char * deviceName, vr::HmdMatrix34_t posMatrix, vr::HmdVector3_t position, vr::HmdQuaternion_t quaternion);
+
+	vr::HmdQuaternion_t GetLeftEyeRotation();
+	vr::HmdVector3_t GetLeftEyePosition();
+	vr::HmdQuaternion_t GetRightEyeRotation();
+	vr::HmdVector3_t GetRightEyePosition();
 
 	Matrix4 GetHMDMatrixProjectionEye( vr::Hmd_Eye nEye );
 	Matrix4 GetHMDMatrixPoseEye( vr::Hmd_Eye nEye );
@@ -117,6 +135,8 @@ public:
 	CGLRenderModel *FindOrLoadRenderModel( const char *pchRenderModelName );
 
 private: 
+	NeRF nerfObj;
+
 	bool m_bDebugOpenGL;
 	bool m_bVerbose;
 	bool m_bPerf;

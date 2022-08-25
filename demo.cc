@@ -577,7 +577,15 @@ void CMainApplication::RunMainLoop()
 	while ( !bQuit )
 	{
 		bQuit = HandleInput();
-
+		/*
+		 * Add a object of NeRF, input pose info and obtain the two eyes' image with the format of char* (RGBRGBRGB...)
+		 * Need the NeRF object has a interface for input of pose and a interface for acquiaition of images
+		 * The image need to be input into the RenderFrame function
+		 */
+		char imLeft[];
+		imLeft = nerfObj::renderWithPose(GetLeftEyePosition, GetLeftEyeRotation);
+		char imRight[];
+		imRight = nerfObj::renderWithPose(GetRightEyePosition, GetRightEyeRotation);
 		RenderFrame();
 	}
 
@@ -609,11 +617,13 @@ void CMainApplication::ProcessVREvent( const vr::VREvent_t & event )
 //-----------------------------------------------------------------------------
 // Purpose:
 //-----------------------------------------------------------------------------
-void CMainApplication::RenderFrame()
+void CMainApplication::RenderFrame(char* imLeft, char* imRight)
 {
 	// for now as fast as possible
 	if ( m_pHMD )
 	{
+		RefreshLeftTexturemaps(imLeft);
+		RefreshRightTexturemaps(imRight);
 		RenderControllerAxes();
 		RenderStereoTargets();
 		RenderCompanionWindow();
@@ -1145,6 +1155,40 @@ void CMainApplication::AddCubeToScene( Matrix4 mat, std::vector<float> &vertdata
 	// AddCubeVertex( C.x, C.y, C.z, 1, 0, vertdata );
 	// AddCubeVertex( G.x, G.y, G.z, 0, 0, vertdata );
 	// AddCubeVertex( F.x, F.y, F.z, 0, 1, vertdata );
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: Refresh the left eye's texture
+//-----------------------------------------------------------------------------
+bool CMainApplication::RefreshLeftTexturemaps(char* image) {
+	if (!image) {
+		dprintf("The input image data is NULL.");
+		return false;
+	}
+	glBindTexture(GL_TEXTURE_2D, m_iLeftTex);
+	unsigned nImageWidth, nImageHeight;
+	nImageWidth = 1920;
+	nImageHeight = 1080;
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, nImageWidth, nImageHeight, 0, GL_RGBA, GL_UNSIGNeD_BYTE, &image[0]);
+	glBindTexture(GL_TEXTURE_2D, 0);
+	return true;
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: Refresh right eye's texture
+//-----------------------------------------------------------------------------
+bool CMainApplication::RefreshRightTexturemaps(char* image) {
+	if (!image) {
+		dprintf("The input image data is NULL.");
+		return false;
+	}
+	glBindTexture(GL_TEXTURE_2D, m_iRightTex);
+	unsigned nImageWidth, nImageHeight;
+	nImageWidth = 1920;
+	nImageHeight = 1080;
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, nImageWidth, nImageHeight, 0, GL_RGBA, GL_UNSIGNeD_BYTE, &image[0]);
+	glBindTexture(GL_TEXTURE_2D, 0);
+	return true;
 }
 
 
@@ -1958,6 +2002,22 @@ void CMainApplication::printDevicePositionalData(const char * deviceName, vr::Hm
     //    posMatrix.m[2][0], posMatrix.m[2][1], posMatrix.m[2][2], posMatrix.m[2][3],
     //    quaternion.w, quaternion.x, quaternion.y, quaternion.z);
 
+}
+
+vr::HmdQuaternion_t CMainApplication::GetLeftEyeRotation() {
+	return GetRotation(ConvertMatrix4ToSteamVRMatrix(m_mat4eyePosLeft * m_mat4HMDPose));
+}
+
+vr::HmdVector3_t CMainApplication::GetLeftEyePosition() {
+	return GetPosition(ConvertMatrix4ToSteamVRMatrix(m_mat4eyePosLeft * m_mat4HMDPose));
+}
+
+vr::HmdQuaternion_t CMainApplication::GetRightEyeRotation() {
+	return GetRotation(ConvertMatrix4ToSteamVRMatrix(m_mat4eyePosRight * m_mat4HMDPose));
+}
+
+vr::HmdVector3_t CMainApplication::GetRightEyePosition() {
+	return GetPosition(ConvertMatrix4ToSteamVRMatrix(m_mat4eyePosRight * m_mat4HMDPose));
 }
 
 //-----------------------------------------------------------------------------
