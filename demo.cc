@@ -578,9 +578,7 @@ void CMainApplication::RunMainLoop()
 	{
 		bQuit = HandleInput();
 		/*
-		 * Add a object of NeRF, input pose info and obtain the two eyes' image with the format of char* (RGBRGBRGB...)
-		 * Need the NeRF object has a interface for input of pose and a interface for acquiaition of images
-		 * The image need to be input into the RenderFrame function
+		 * Need to update the independence of Eigen, NerfRender, Image, Camera;
 		 */
 		Image imLeft, imRight;
 		Camera cam = {1375.52, 1374.49, 554.558, 965.268};
