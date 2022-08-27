@@ -1,6 +1,10 @@
 #ifndef demo_h
 #define demo_h
 
+#include <nerf-cuda/common.h> // Need to update the dependence
+#include <nerf-cuda/nerf_render.h>
+#include <Eigen/Dense>
+
 #include <SDL.h>
 #include <GL/glew.h>
 #include <SDL_opengl.h>
@@ -38,16 +42,6 @@
 #pragma warning(disable:4996)
 
 void ThreadSleep( unsigned long nMilliseconds );
-
-class NeRf {
-	public:
-		NeRF();
-		~NeRF();
-		static char* renderWithPose(vr::HmdVector3_t, vr::HmdQuaternion_t);
-
-	private:
-
-};
 
 class CGLRenderModel
 {
@@ -89,7 +83,7 @@ public:
 	void RunMainLoop();
 	bool HandleInput();
 	void ProcessVREvent( const vr::VREvent_t & event );
-	void RenderFrame(char*, char*);
+	void RenderFrame(Image, Image);
 
 	bool SetupLeftTexturemaps();
 	bool SetupRightTexturemaps();
@@ -120,6 +114,9 @@ public:
 	vr::HmdVector3_t GetLeftEyePosition();
 	vr::HmdQuaternion_t GetRightEyeRotation();
 	vr::HmdVector3_t GetRightEyePosition();
+
+	Eigen::Matrix<float, 4, 4> GetLeftEyePose();
+	Eigen::Matrix<float, 4, 4> GetRightEyePose();
 
 	Matrix4 GetHMDMatrixProjectionEye( vr::Hmd_Eye nEye );
 	Matrix4 GetHMDMatrixPoseEye( vr::Hmd_Eye nEye );

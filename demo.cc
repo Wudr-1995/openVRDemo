@@ -582,11 +582,15 @@ void CMainApplication::RunMainLoop()
 		 * Need the NeRF object has a interface for input of pose and a interface for acquiaition of images
 		 * The image need to be input into the RenderFrame function
 		 */
-		char imLeft[];
-		imLeft = nerfObj::renderWithPose(GetLeftEyePosition, GetLeftEyeRotation);
-		char imRight[];
-		imRight = nerfObj::renderWithPose(GetRightEyePosition, GetRightEyeRotation);
-		RenderFrame();
+		Image imLeft, imRight;
+		Camera cam = {1375.52, 1374.49, 554.558, 965.268};
+		Eigen::Matrix<float, 4, 4> leftPose, rightPose;
+		leftPose = GetLeftEyePose();
+		rightPose = GetRightEyePose();
+		Eigen::Vector2i resolution(1080, 1920);
+		imLeft = NerfRender::render_frame(cam, leftPose, resolution);
+		imRight = NerfRender::render_frame(cam, rightPose, resolution);
+		RenderFrame(imLeft, imRight);
 	}
 
 	SDL_StopTextInput();
@@ -617,13 +621,13 @@ void CMainApplication::ProcessVREvent( const vr::VREvent_t & event )
 //-----------------------------------------------------------------------------
 // Purpose:
 //-----------------------------------------------------------------------------
-void CMainApplication::RenderFrame(char* imLeft, char* imRight)
+void CMainApplication::RenderFrame(Image imLeft, Image imRight)
 {
 	// for now as fast as possible
 	if ( m_pHMD )
 	{
-		RefreshLeftTexturemaps(imLeft);
-		RefreshRightTexturemaps(imRight);
+		RefreshLeftTexturemaps(imLeft.rgb);
+		RefreshRightTexturemaps(imRight.rgb);
 		RenderControllerAxes();
 		RenderStereoTargets();
 		RenderCompanionWindow();
@@ -978,12 +982,12 @@ void CMainApplication::SetupScene()
 		return;
 
 	float vertics[] = {
-		-1.0f, -1.0f, -0.0f, 0.0f, 1.0f,
-		 1.0f, -1.0f, -0.0f, 1.0f, 1.0f,
-		 1.0f,  1.0f, -0.0f, 1.0f, 0.0f,
-		 1.0f,  1.0f, -0.0f, 1.0f, 0.0f,
-		-1.0f,  1.0f, -0.0f, 0.0f, 0.0f,
-		-1.0f, -1.0f, -0.0f, 0.0f, 1.0f
+		-1.5f, -1.5f * 1080.0f / 1920.0f, -0.0f, 0.0f, 1.0f,
+		 1.5f, -1.5f * 1080.0f / 1920.0f, -0.0f, 1.0f, 1.0f,
+		 1.5f,  1.5f * 1080.0f / 1920.0f, -0.0f, 1.0f, 0.0f,
+		 1.5f,  1.5f * 1080.0f / 1920.0f, -0.0f, 1.0f, 0.0f,
+		-1.5f,  1.5f * 1080.0f / 1920.0f, -0.0f, 0.0f, 0.0f,
+		-1.5f, -1.5f * 1080.0f / 1920.0f, -0.0f, 0.0f, 1.0f
 	};
 
 	m_uiVertcount = 6;
@@ -2020,6 +2024,26 @@ vr::HmdVector3_t CMainApplication::GetRightEyePosition() {
 	return GetPosition(ConvertMatrix4ToSteamVRMatrix(m_mat4eyePosRight * m_mat4HMDPose));
 }
 
+Eigen::Matrix<float, 4, 4> CMainApplication::GetLeftEyePose() {
+	const float* tmp = (m_mat4eyePosLeft * m_mat4HMDPose).get();
+	Eigen::Matrix<float, 4, 4> mat;
+	mat << tmp[0], tmp[1], tmp[2], tmp[3],
+		   tmp[4], tmp[5], tmp[6], tmp[7],
+		   tmp[8], tmp[9], tmp[10], tmp[11],
+		   tmp[12], tmp[13], tmp[14], tmp[15];
+	return mat;
+}
+
+Eigen::Matrix<float, 4, 4> CMainApplication::GetRightEyePose() {
+	const float* tmp = (m_mat4eyePosRight * m_mat4HMDPose).get();
+	Eigen::Matrix<float, 4, 4> mat;
+	mat << tmp[0], tmp[1], tmp[2], tmp[3],
+		   tmp[4], tmp[5], tmp[6], tmp[7],
+		   tmp[8], tmp[9], tmp[10], tmp[11],
+		   tmp[12], tmp[13], tmp[14], tmp[15];
+	return mat;
+}
+
 //-----------------------------------------------------------------------------
 // Purpose:
 //-----------------------------------------------------------------------------
@@ -2027,12 +2051,10 @@ int main(int argc, char *argv[])
 {
 	CMainApplication *pMainApplication = new CMainApplication( argc, argv );
 
-	dprintf("================================================== Running... ==================================================\n");
 
 	if (!pMainApplication->BInit())
 	{
 		pMainApplication->Shutdown();
-		dprintf("================================================== End 0 ==================================================\n");
 		return 1;
 	}
 
@@ -2040,8 +2062,6 @@ int main(int argc, char *argv[])
 
 	pMainApplication->Shutdown();
 
-	std::clog << "End." << std::endl;
-	dprintf("================================================== End 1 ==================================================\n");
 
 	return 0;
 }
