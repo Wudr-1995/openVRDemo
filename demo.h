@@ -3,7 +3,7 @@
 
 #include <nerf-cuda/common.h> // Need to update the dependence
 #include <nerf-cuda/nerf_render.h>
-#include <Eigen/Dense>
+#include <Eigen/Dense> // Need to update the dependence
 
 #include <SDL.h>
 #include <GL/glew.h>
