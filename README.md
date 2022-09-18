@@ -15,7 +15,7 @@ openGL是一个用于显示图形图像的API，渲染流程是这样的
 
 ### openGL vertex渲染部分
 与我们目标相关的vertex的部分在这里
-c++ `
+c++`
 void CMainApplication::SetupScene() {
 	if ( !m_pHMD )
 		return;
