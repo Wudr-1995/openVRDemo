@@ -20,6 +20,12 @@ void CMainApplication::SetupScene() {
 	if ( !m_pHMD )
 		return;
 
+	/* vertex
+	 * six vector (one line one vector) in total
+	 * the first three values in a vector are the coordinates of vertex
+	 * the last two values are the UV coordinates
+	 * modify the first three values to modify the render performance of the image in the VR glasses
+	 */
 	float vertics[] = {
 		-0.8f * 1080.0f / 1080.0f, -0.8f, -0.0f, 0.0f, 1.0f,
 		 0.8f * 1080.0f / 1080.0f, -0.8f, -0.0f, 1.0f, 1.0f,
@@ -31,9 +37,14 @@ void CMainApplication::SetupScene() {
 
 	m_uiVertcount = 6;
 
+	// generate the vertex array, m_unSceneVAO is the ID of VAO
 	glGenVertexArrays( 1, &m_unSceneVAO );
 	glBindVertexArray( m_unSceneVAO );
 
+	/* generate the buffer, m_glSceneVertBuffer is the buffer ID
+	 * bind the buffer with the defaut buffer GL_ARRAY_BUFFER
+	 * and load the vertex data into the buffer
+	 */
 	glGenBuffers( 1, &m_glSceneVertBuffer );
 	glBindBuffer( GL_ARRAY_BUFFER, m_glSceneVertBuffer );
 	glBufferData( GL_ARRAY_BUFFER, sizeof(float) * 30, vertics, GL_STATIC_DRAW);
@@ -48,3 +59,4 @@ void CMainApplication::SetupScene() {
 	glVertexAttribPointer( 1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (const void *)offset);
 }
 ```
+代码中首先准备了六个vertex矢量，
