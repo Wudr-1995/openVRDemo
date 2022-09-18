@@ -63,7 +63,7 @@ void CMainApplication::SetupScene() {
 }
 ```
 
-## 纹理初始化
+### 纹理初始化
 以左眼纹理初始化为例，右眼与之方法相同，命名类似
 ```c++
 bool CMainApplication::SetupLeftTexturemaps()
@@ -106,7 +106,7 @@ bool CMainApplication::SetupLeftTexturemaps()
 }
 ```
 
-## 图像输入与产生纹理
+### 图像输入与产生纹理
 以左眼纹理刷新为例，右眼与之方法相同，命名类似
 ```c++
 bool CMainApplication::RefreshLeftTexturemaps(unsigned char* image, int w, int h) {
