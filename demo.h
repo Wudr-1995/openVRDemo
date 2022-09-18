@@ -1,9 +1,9 @@
 #ifndef demo_h
 #define demo_h
 
-#include <nerf-cuda/common.h> // Need to update the dependence
-#include <nerf-cuda/nerf_render.h>
-#include <Eigen/Dense> // Need to update the dependence
+// #include <nerf-cuda/common.h> // Need to update the dependence
+// #include <nerf-cuda/nerf_render.h>
+// #include <Eigen/Dense> // Need to update the dependence
 
 #include <SDL.h>
 #include <GL/glew.h>
@@ -23,9 +23,9 @@
 
 #include <openvr.h>
 
-#include "shared/lodepng.h"
-#include "shared/Matrices.h"
-#include "shared/pathtools.h"
+#include "lodepng.h"
+#include "Matrices.h"
+#include "pathtools.h"
 
 #if defined(POSIX)
 #include "unistd.h"
@@ -80,10 +80,12 @@ public:
 
 	void Shutdown();
 
-	void RunMainLoop();
+	// void RunMainLoop();
+	void Run();
+	void Stop();
 	bool HandleInput();
 	void ProcessVREvent( const vr::VREvent_t & event );
-	void RenderFrame(Image, Image);
+	void RenderFrame(unsigned char*, int, int, unsigned char*, int, int);
 
 	bool SetupLeftTexturemaps();
 	bool SetupRightTexturemaps();
@@ -98,8 +100,8 @@ public:
 	void SetupCompanionWindow();
 	void SetupCameras();
 
-	void RefreshLeftTexturemaps(char*);
-	void RefreshRightTexturemaps(char*);
+	bool RefreshLeftTexturemaps(unsigned char*, int, int);
+	bool RefreshRightTexturemaps(unsigned char*, int, int);
 
 	void RenderStereoTargets();
 	void RenderCompanionWindow();
@@ -115,8 +117,8 @@ public:
 	vr::HmdQuaternion_t GetRightEyeRotation();
 	vr::HmdVector3_t GetRightEyePosition();
 
-	Eigen::Matrix<float, 4, 4> GetLeftEyePose();
-	Eigen::Matrix<float, 4, 4> GetRightEyePose();
+	void GetLeftEyePose(float p[]);
+	void GetRightEyePose(float p[]);
 
 	Matrix4 GetHMDMatrixProjectionEye( vr::Hmd_Eye nEye );
 	Matrix4 GetHMDMatrixPoseEye( vr::Hmd_Eye nEye );
@@ -132,7 +134,6 @@ public:
 	CGLRenderModel *FindOrLoadRenderModel( const char *pchRenderModelName );
 
 private: 
-	NeRF nerfObj;
 
 	bool m_bDebugOpenGL;
 	bool m_bVerbose;

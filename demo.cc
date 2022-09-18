@@ -296,6 +296,7 @@ bool CMainApplication::BInit()
 		return false;
 	}
 
+	// vr::VRInput()->SetActionManifestPath( "D:/openvr-master/samples/NeRF2VRv1_1/hellovr_actions.json" );
 	vr::VRInput()->SetActionManifestPath( Path_MakeAbsolute( "../hellovr_actions.json", Path_StripFilename( Path_GetExecutablePath() ) ).c_str() );
 
 	vr::VRInput()->GetActionHandle( "/actions/demo/in/HideCubes", &m_actionHideCubes );
@@ -465,6 +466,7 @@ bool CMainApplication::HandleInput()
 	{
 		if ( sdlEvent.type == SDL_QUIT )
 		{
+			// dprintf("sdlEvent.type: %d == SDL_QUIT: %d", &sdlEvent.type, SDL_QUIT);
 			bRet = true;
 		}
 		else if ( sdlEvent.type == SDL_KEYDOWN )
@@ -567,30 +569,37 @@ bool CMainApplication::HandleInput()
 //-----------------------------------------------------------------------------
 // Purpose:
 //-----------------------------------------------------------------------------
-void CMainApplication::RunMainLoop()
-{
-	bool bQuit = false;
+// void CMainApplication::RunMainLoop()
+// {
+// 	bool bQuit = false;
 
+// 	SDL_StartTextInput();
+// 	SDL_ShowCursor( SDL_DISABLE );
+
+// 	while ( !bQuit )
+// 	{
+// 		bQuit = HandleInput();
+// 		/*
+// 		 * Need to update the independence of Eigen, NerfRender, Image, Camera;
+// 		 */
+// 		Camera cam = {1375.52, 1374.49, 554.558, 965.268};
+// 		Eigen::Matrix<float, 4, 4> leftPose, rightPose;
+// 		leftPose = GetLeftEyePose();
+// 		rightPose = GetRightEyePose();
+// 		Eigen::Vector2i resolution(1080, 1920);
+// 		Image imLeft = nerfObj->render_frame(cam, leftPose, resolution);
+// 		Image imRight = nerfObj->render_frame(cam, rightPose, resolution);
+// 		RenderFrame(imLeft, imRight);
+// 	}
+
+// 	SDL_StopTextInput();
+// }
+void CMainApplication::Run() {
 	SDL_StartTextInput();
-	SDL_ShowCursor( SDL_DISABLE );
+	SDL_ShowCursor(SDL_DISABLE);
+}
 
-	while ( !bQuit )
-	{
-		bQuit = HandleInput();
-		/*
-		 * Need to update the independence of Eigen, NerfRender, Image, Camera;
-		 */
-		Image imLeft, imRight;
-		Camera cam = {1375.52, 1374.49, 554.558, 965.268};
-		Eigen::Matrix<float, 4, 4> leftPose, rightPose;
-		leftPose = GetLeftEyePose();
-		rightPose = GetRightEyePose();
-		Eigen::Vector2i resolution(1080, 1920);
-		imLeft = NerfRender::render_frame(cam, leftPose, resolution);
-		imRight = NerfRender::render_frame(cam, rightPose, resolution);
-		RenderFrame(imLeft, imRight);
-	}
-
+void CMainApplication::Stop() {
 	SDL_StopTextInput();
 }
 
@@ -619,13 +628,13 @@ void CMainApplication::ProcessVREvent( const vr::VREvent_t & event )
 //-----------------------------------------------------------------------------
 // Purpose:
 //-----------------------------------------------------------------------------
-void CMainApplication::RenderFrame(Image imLeft, Image imRight)
+void CMainApplication::RenderFrame(unsigned char* imLeft, int lw, int lh, unsigned char* imRight, int rw, int rh)
 {
 	// for now as fast as possible
 	if ( m_pHMD )
 	{
-		RefreshLeftTexturemaps(imLeft.rgb);
-		RefreshRightTexturemaps(imRight.rgb);
+		RefreshLeftTexturemaps(imLeft, lw, lh);
+		RefreshRightTexturemaps(imRight, rw, rh);
 		RenderControllerAxes();
 		RenderStereoTargets();
 		RenderCompanionWindow();
@@ -980,12 +989,12 @@ void CMainApplication::SetupScene()
 		return;
 
 	float vertics[] = {
-		-1.5f, -1.5f * 1080.0f / 1920.0f, -0.0f, 0.0f, 1.0f,
-		 1.5f, -1.5f * 1080.0f / 1920.0f, -0.0f, 1.0f, 1.0f,
-		 1.5f,  1.5f * 1080.0f / 1920.0f, -0.0f, 1.0f, 0.0f,
-		 1.5f,  1.5f * 1080.0f / 1920.0f, -0.0f, 1.0f, 0.0f,
-		-1.5f,  1.5f * 1080.0f / 1920.0f, -0.0f, 0.0f, 0.0f,
-		-1.5f, -1.5f * 1080.0f / 1920.0f, -0.0f, 0.0f, 1.0f
+		-0.8f * 1080.0f / 1080.0f, -0.8f, -0.0f, 0.0f, 1.0f,
+		 0.8f * 1080.0f / 1080.0f, -0.8f, -0.0f, 1.0f, 1.0f,
+		 0.8f * 1080.0f / 1080.0f,  0.8f, -0.0f, 1.0f, 0.0f,
+		 0.8f * 1080.0f / 1080.0f,  0.8f, -0.0f, 1.0f, 0.0f,
+		-0.8f * 1080.0f / 1080.0f,  0.8f, -0.0f, 0.0f, 0.0f,
+		-0.8f * 1080.0f / 1080.0f, -0.8f, -0.0f, 0.0f, 1.0f
 	};
 
 	m_uiVertcount = 6;
@@ -1162,16 +1171,34 @@ void CMainApplication::AddCubeToScene( Matrix4 mat, std::vector<float> &vertdata
 //-----------------------------------------------------------------------------
 // Purpose: Refresh the left eye's texture
 //-----------------------------------------------------------------------------
-bool CMainApplication::RefreshLeftTexturemaps(char* image) {
+bool CMainApplication::RefreshLeftTexturemaps(unsigned char* image, int w, int h) {
 	if (!image) {
 		dprintf("The input image data is NULL.");
 		return false;
 	}
 	glBindTexture(GL_TEXTURE_2D, m_iLeftTex);
 	unsigned nImageWidth, nImageHeight;
-	nImageWidth = 1920;
-	nImageHeight = 1080;
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, nImageWidth, nImageHeight, 0, GL_RGBA, GL_UNSIGNeD_BYTE, &image[0]);
+	nImageWidth = w;
+	nImageHeight = h;
+	dprintf("==================== Before left buffer refresh ====================\n");
+	// glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
+	dprintf("Width: %d\nHight: %d\n", w, h);
+	// dprintf("%d, %d, %d\n%d, %d, %d\n%d, %d, %d\n", image[0], image[1], image[2],
+	// 		image[3], image[4], image[5], image[6], image[7], image[8]);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, nImageWidth, nImageHeight, 0, GL_RGB, GL_UNSIGNED_BYTE, image);
+	dprintf("\n==================== After ====================\n");
+
+	glGenerateMipmap(GL_TEXTURE_2D);
+
+	// glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE );
+	// glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE );
+	// glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR );
+	// glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR );
+
+	// GLfloat fLargest;
+	// glGetFloatv(GL_MAX_TEXTURE_MAX_ANISOTROPY_EXT, &fLargest);
+	// glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY_EXT, fLargest);
+
 	glBindTexture(GL_TEXTURE_2D, 0);
 	return true;
 }
@@ -1179,16 +1206,31 @@ bool CMainApplication::RefreshLeftTexturemaps(char* image) {
 //-----------------------------------------------------------------------------
 // Purpose: Refresh right eye's texture
 //-----------------------------------------------------------------------------
-bool CMainApplication::RefreshRightTexturemaps(char* image) {
+bool CMainApplication::RefreshRightTexturemaps(unsigned char* image, int w, int h) {
 	if (!image) {
 		dprintf("The input image data is NULL.");
 		return false;
 	}
 	glBindTexture(GL_TEXTURE_2D, m_iRightTex);
 	unsigned nImageWidth, nImageHeight;
-	nImageWidth = 1920;
-	nImageHeight = 1080;
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, nImageWidth, nImageHeight, 0, GL_RGBA, GL_UNSIGNeD_BYTE, &image[0]);
+	nImageWidth = w;
+	nImageHeight = h;
+	dprintf("==================== Before ====================\n");
+	// glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, nImageWidth, nImageHeight, 0, GL_RGB, GL_UNSIGNED_BYTE, image);
+	dprintf("==================== After ====================\n");
+
+	glGenerateMipmap(GL_TEXTURE_2D);
+
+	// glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE );
+	// glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE );
+	// glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR );
+	// glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR );
+
+	// GLfloat fLargest;
+	// glGetFloatv(GL_MAX_TEXTURE_MAX_ANISOTROPY_EXT, &fLargest);
+	// glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY_EXT, fLargest);
+
 	glBindTexture(GL_TEXTURE_2D, 0);
 	return true;
 }
@@ -1370,16 +1412,26 @@ void CMainApplication::SetupCompanionWindow()
 	std::vector<VertexDataWindow> vVerts;
 
 	// left eye verts
-	vVerts.push_back( VertexDataWindow( Vector2(-1, -1), Vector2(0, 1)) );
-	vVerts.push_back( VertexDataWindow( Vector2(0, -1), Vector2(1, 1)) );
-	vVerts.push_back( VertexDataWindow( Vector2(-1, 1), Vector2(0, 0)) );
-	vVerts.push_back( VertexDataWindow( Vector2(0, 1), Vector2(1, 0)) );
+	vVerts.push_back( VertexDataWindow( Vector2(-1, -1), Vector2(0, 0)) );
+	vVerts.push_back( VertexDataWindow( Vector2(0, -1), Vector2(1, 0)) );
+	vVerts.push_back( VertexDataWindow( Vector2(-1, 1), Vector2(0, 1)) );
+	vVerts.push_back( VertexDataWindow( Vector2(0, 1), Vector2(1, 1)) );
+
+	// vVerts.push_back( VertexDataWindow( Vector2(-1, -1), Vector2(0, 1)) );
+	// vVerts.push_back( VertexDataWindow( Vector2(0, -1), Vector2(1, 1)) );
+	// vVerts.push_back( VertexDataWindow( Vector2(-1, 1), Vector2(0, 0)) );
+	// vVerts.push_back( VertexDataWindow( Vector2(0, 1), Vector2(1, 0)) );
 
 	// right eye verts
-	vVerts.push_back( VertexDataWindow( Vector2(0, -1), Vector2(0, 1)) );
-	vVerts.push_back( VertexDataWindow( Vector2(1, -1), Vector2(1, 1)) );
-	vVerts.push_back( VertexDataWindow( Vector2(0, 1), Vector2(0, 0)) );
-	vVerts.push_back( VertexDataWindow( Vector2(1, 1), Vector2(1, 0)) );
+	vVerts.push_back( VertexDataWindow( Vector2(0, -1), Vector2(0, 0)) );
+	vVerts.push_back( VertexDataWindow( Vector2(1, -1), Vector2(1, 0)) );
+	vVerts.push_back( VertexDataWindow( Vector2(0, 1), Vector2(0, 1)) );
+	vVerts.push_back( VertexDataWindow( Vector2(1, 1), Vector2(1, 1)) );
+
+	// vVerts.push_back( VertexDataWindow( Vector2(0, -1), Vector2(0, 1)) );
+	// vVerts.push_back( VertexDataWindow( Vector2(1, -1), Vector2(1, 1)) );
+	// vVerts.push_back( VertexDataWindow( Vector2(0, 1), Vector2(0, 0)) );
+	// vVerts.push_back( VertexDataWindow( Vector2(1, 1), Vector2(1, 0)) );
 
 	GLushort vIndices[] = { 0, 1, 3,   0, 3, 2,   4, 5, 7,   4, 7, 6};
 	m_uiCompanionWindowIndexSize = _countof(vIndices);
@@ -1893,7 +1945,7 @@ void CMainApplication::printPositionalData()
                 position = GetPosition(trackedDevicePose.mDeviceToAbsoluteTracking);
                 quaternion = GetRotation(trackedDevicePose.mDeviceToAbsoluteTracking);
 
-                printDevicePositionalData("HMD", poseMatrix, position, quaternion);
+                // printDevicePositionalData("HMD", poseMatrix, position, quaternion);
 
 				leftPosition = GetPosition(ConvertMatrix4ToSteamVRMatrix(m_mat4eyePosLeft * m_mat4HMDPose));
 				rightPosition = GetPosition(ConvertMatrix4ToSteamVRMatrix(m_mat4eyePosRight * m_mat4HMDPose));
@@ -2022,44 +2074,52 @@ vr::HmdVector3_t CMainApplication::GetRightEyePosition() {
 	return GetPosition(ConvertMatrix4ToSteamVRMatrix(m_mat4eyePosRight * m_mat4HMDPose));
 }
 
-Eigen::Matrix<float, 4, 4> CMainApplication::GetLeftEyePose() {
-	const float* tmp = (m_mat4eyePosLeft * m_mat4HMDPose).get();
-	Eigen::Matrix<float, 4, 4> mat;
-	mat << tmp[0], tmp[1], tmp[2], tmp[3],
-		   tmp[4], tmp[5], tmp[6], tmp[7],
-		   tmp[8], tmp[9], tmp[10], tmp[11],
-		   tmp[12], tmp[13], tmp[14], tmp[15];
-	return mat;
+void CMainApplication::GetLeftEyePose(float pose[]) {
+	float* tmp = (float*)(m_mat4eyePosLeft * m_mat4HMDPose).get();
+	for (int i = 0; i < 16; i ++) {
+		pose[i] = tmp[i];
+	}
+	dprintf("In GetLeftEyePose()\n");
+	dprintf("%f\t%f\t%f\t%f\n", pose[0], pose[1], pose[2], pose[3]);
+	// Eigen::Matrix<float, 4, 4> mat;
+	// mat << tmp[0], tmp[1], tmp[2], tmp[3],
+	// 	   tmp[4], tmp[5], tmp[6], tmp[7],
+	// 	   tmp[8], tmp[9], tmp[10], tmp[11],
+	// 	   tmp[12], tmp[13], tmp[14], tmp[15];
+	// return mat;
 }
 
-Eigen::Matrix<float, 4, 4> CMainApplication::GetRightEyePose() {
-	const float* tmp = (m_mat4eyePosRight * m_mat4HMDPose).get();
-	Eigen::Matrix<float, 4, 4> mat;
-	mat << tmp[0], tmp[1], tmp[2], tmp[3],
-		   tmp[4], tmp[5], tmp[6], tmp[7],
-		   tmp[8], tmp[9], tmp[10], tmp[11],
-		   tmp[12], tmp[13], tmp[14], tmp[15];
-	return mat;
+void CMainApplication::GetRightEyePose(float pose[]) {
+	float* tmp = (float*)(m_mat4eyePosRight * m_mat4HMDPose).get();
+	for (int i = 0; i < 16; i ++) {
+		pose[i] = tmp[i];
+	}
+	// Eigen::Matrix<float, 4, 4> mat;
+	// mat << tmp[0], tmp[1], tmp[2], tmp[3],
+	// 	   tmp[4], tmp[5], tmp[6], tmp[7],
+	// 	   tmp[8], tmp[9], tmp[10], tmp[11],
+	// 	   tmp[12], tmp[13], tmp[14], tmp[15];
+	// return mat;
 }
 
 //-----------------------------------------------------------------------------
 // Purpose:
 //-----------------------------------------------------------------------------
-int main(int argc, char *argv[])
-{
-	CMainApplication *pMainApplication = new CMainApplication( argc, argv );
+// int main(int argc, char *argv[])
+// {
+// 	CMainApplication *pMainApplication = new CMainApplication( argc, argv );
 
 
-	if (!pMainApplication->BInit())
-	{
-		pMainApplication->Shutdown();
-		return 1;
-	}
+// 	if (!pMainApplication->BInit())
+// 	{
+// 		pMainApplication->Shutdown();
+// 		return 1;
+// 	}
 
-	pMainApplication->RunMainLoop();
+// 	pMainApplication->RunMainLoop();
 
-	pMainApplication->Shutdown();
+// 	pMainApplication->Shutdown();
 
 
-	return 0;
-}
+// 	return 0;
+// }
