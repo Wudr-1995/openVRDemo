@@ -1,4 +1,4 @@
-# 推流demo介绍
+# Introduction 
 
 ## 程序框架
 这一demo是在openvr的官方sample基础上添加修改而来。主要基于openvr和opengl，opengl用于实现渲染，openvr则用于与VR眼镜通讯，将渲染的结果显示在眼镜上。
