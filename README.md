@@ -84,7 +84,7 @@ bool CMainApplication::SetupLeftTexturemaps()
 	glGenTextures(1, &m_iLeftTex );
 	glBindTexture( GL_TEXTURE_2D, m_iLeftTex );
 
-	// input the image to initial the texture, the input also can be set as NULL
+	// input the image to initialize the texture, the input also can be set as NULL
 	glTexImage2D( GL_TEXTURE_2D, 0, GL_RGBA, nImageWidth, nImageHeight,
 		0, GL_RGBA, GL_UNSIGNED_BYTE, &imageRGBA[0] );
 
