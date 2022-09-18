@@ -35,6 +35,16 @@ void CMainApplication::SetupScene() {
 		-0.8f * 1080.0f / 1080.0f,  0.8f, -0.0f, 0.0f, 0.0f,
 		-0.8f * 1080.0f / 1080.0f, -0.8f, -0.0f, 0.0f, 1.0f
 	};
+	/*
+	 * six coordinates form 2 triangles and 2 trianlges form a square
+	 *  -----
+	 * |    /|
+	 * |   / |
+	 * |  /  |
+	 * | /   |
+	 * |/    |
+	 *  -----
+	 */
 
 	m_uiVertcount = 6;
 
