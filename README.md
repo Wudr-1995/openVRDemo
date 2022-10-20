@@ -10,6 +10,11 @@ openGL是一个用于显示图形图像的API，渲染流程是这样的
 
 准备好vertex信息->将vertex信息绑定在确定ID的buffer上->通过编译好的shader程序渲染得到由vertex确定的三角形组成的网格->并将准备好的纹理在网格中显示
 
+## 在结合NeRF-Cuda之后的编译命令
+- 进入NeRF2VR路径下
+- cmake . -B build
+- cmake --build build --config RelWithDebInfo -j
+
 ## CMainApplication
 在demo的实现中，也是按照openGL的流程进行的，与vr有关的主要是最后通过openVR的接口函数将准备好的纹理推流到设备上去。
 
