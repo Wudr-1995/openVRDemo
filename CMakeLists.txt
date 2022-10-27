@@ -284,27 +284,25 @@ set(DEMOSOURCES ${DEMOSOURCES} shared/pathtools.cpp)
 set(DEMOSOURCES ${DEMOSOURCES} shared/strtools.cpp)
 add_library(demo STATIC ${DEMOSOURCES})
 
+#set the include directories of XR demo
 include_directories("dependencies/sdl2-2.0.3/include")
 include_directories("dependencies/glew/glew-1.11.0/include")
 include_directories("shared")
 include_directories("../../headers")
 include_directories("src")
 
+# link the related lib and properties of XR demo
 set_target_properties(demo PROPERTIES CUDA_RESOLVE_DEVICE_SYMBOLS ON)
 set_target_properties(demo PROPERTIES CUDA_SEPARABLE_COMPILATION ON)
 target_link_libraries(demo PUBLIC ${OPENGL_LIBRARIES})
 target_link_libraries(demo PUBLIC ${CMAKE_DL_LIBS})
-# target_link_libraries(demo PUBLIC tiny-cuda-nn)
-# target_link_libraries(demo PUBLIC ${NGP_LIBRARIES})
 target_link_libraries(demo PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/dependencies/sdl2-2.24.0/lib/x64/SDL2.lib)
-# target_link_libraries(demo PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/dependencies/sdl2-2.0.3/bin/win64/SDL2.lib)
 target_link_libraries(demo PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/dependencies/glew/glew-1.11.0/lib/Release/x64/glew32.lib)
 target_link_libraries(demo PUBLIC D:/openvr-master/lib/win64/openvr_api.lib)
-# target_compile_options(demo PRIVATE $<$<COMPILE_LANGUAGE:CUDA>:${CUDA_NVCC_FLAGS}>)
-# target_compile_definitions(demo PUBLIC ${NGP_DEFINITIONS} ${TCNN_DEFINITIONS})
 
 add_executable(testbed src/main.cu)
 target_link_libraries(testbed PUBLIC ngp)
+# link the XR demo with the executed target
 target_link_libraries(testbed PRIVATE demo)
 target_compile_options(testbed PRIVATE $<$<COMPILE_LANGUAGE:CUDA>:${CUDA_NVCC_FLAGS}>)
 target_compile_definitions(testbed PUBLIC ${NGP_DEFINITIONS} ${TCNN_DEFINITIONS})
