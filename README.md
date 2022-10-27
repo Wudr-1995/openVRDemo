@@ -15,6 +15,10 @@ openGL是一个用于显示图形图像的API，渲染流程是这样的
 - cmake . -B build
 - cmake --build build --config RelWithDebInfo -j
 
+## 编译后的执行
+- 将dll文件夹中的链接库复制到build文件夹下
+- 打开testbed执行
+
 ## CMainApplication
 在demo的实现中，也是按照openGL的流程进行的，与vr有关的主要是最后通过openVR的接口函数将准备好的纹理推流到设备上去。
 
